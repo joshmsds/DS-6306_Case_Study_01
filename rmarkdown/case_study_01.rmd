@@ -20,6 +20,7 @@ head(beer_df)
 dim(beer_df)
 head(brew_df)
 dim(brew_df)
+
 ```
 
 ## Including Plots
