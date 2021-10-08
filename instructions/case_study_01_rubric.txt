@@ -1,0 +1,66 @@
+Rubric - Case Study 1
+
+Initial EDA (Overall 5% of DDS Grade)
+*	The initial EDA presentation should be well polished as should the visual aids (example: PowerPoint deck)
+o	Plots and Charts should be mentioned and/or referred to in the verbal presentation or they 
+should not be in the deck.
+o	Refrain from writing too much on the slides and / or overloading with information. 
+o	Use the information on the slides as an aid not a script.  Points will be deducted for reading 
+too much off of the slides.  
+o	Plots and Charts should be well labeled. 
+o	No code or screen shots of output.
+o	Questions 1,3,4,5,6 and 7 should be fully addressed. 
+o	In general, points will be deducted for sloppiness and /or incompleteness.  
+o	Efforts that completely address each analysis question in an organized, clear and well 
+supported manner will receive all or very near full credit.  
+o	Keep the presentation under 5 min. 
+*	The Initial EDA and Presentation is graded more on completeness rather than correctness.  Your 
+professor may give some direction or correction that they will look for in the final presentation.  
+
+Final Analysis (Overall 20% of DDS Grade)
+*	The final analysis / presentation includes the EDA (6 questions) plus the additional analysis and 
+polished presentation. 
+*	All %s below are of the overall 20% grade. 
+RMD/ Answer to Analysis Questions - 60%
+*	Each team member will receive the same grade for the analysis / RMD and possibly analysis on 
+PowerPoint deck (if same deck is used.)  If there is division of labor, it is assume that the each team 
+member is double checking and is very familiar with the response to every analysis question.  
+*	9 Analysis Questions: not equally weighted.  The harder questions are worth more points.  
+*	Taking off for cumulative errors will not be a thing, provided the answer is well-reasoned based on 
+prior questions' answers.
+*	Documentation: Answers should be in a well commented and explained RMarkdown file. 
+YouTube Presentation - 20%	
+*	Communication and presentation of your findings are critical to being a successful data scientist.  You will 
+be graded on:
+o	Voice inflection
+o	Content Knowledge
+o	Slide Organization / Content
+o	Visualization 
+o	Periodic eye contact and general interest in your audience. (Your face must be visible during 
+the presentation.)
+o	Composure: This will be mostly not reading off of the slides.  
+o	Pace: Not going a second over 7 minutes.  The CEO and CFO are very strict on this point.  
+Note: While each member of the team will receive the same grade on the RMD / Answer to the analysis 
+questions, they will receive a different grade on thier presentation.  One member's presentation will not affect 
+anyone else's presentation grade. Each member of the team should present solutions to all 9 questions.  You 
+may develop the slides for the presentation together and use the same deck or you may make your own slides, 
+but each team member must make their own video (7 minutes or less) and post it to YouTube separately 
+(unique URL).       
+GitHub - 10%
+*	Sensible structuring (location) of files in repository
+*	Presence of Powerpoint, Rmd and knit files in the repo.  
+*	Readme/Codebook
+Peer Grading - 10% 
+*	Send a review of your performance and your teammate's performance to 2DS.  You will do this twice 
+during the project: one will be turned in to 2DS Unit 8 and again in Unit 9.  Honest (but not rude) 
+appraisal is fair game.  Your review will not be shared with your teammate.  Give them a score from 0 
+to 10.  Most people should fall between a 6 to 10 (D to A) range.  5 or lower (F) is reserved for 
+particularly difficult teammates.  Grade your own effort on this metric as well.
+o	This metric should not be a measure of your partner's coding ability, but the amount of effort 
+they put in.  If they are well-meaning but make mistakes, that is not cause to dock them 
+points.  It should be reserved for no-shows, careless work, or laziness.  
+o	Make yourself available and accountable.  By signing up for this course, you committed and 
+will need to make time to work on the project.  We are all busy adults; you must manage your 
+time well and meet halfway on your partner's schedule.
+o	Failure to turn in a review will result in a zero for this section.
+
