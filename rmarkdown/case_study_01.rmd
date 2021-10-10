@@ -62,13 +62,24 @@ colSums(is.na(merged_beer))
 #4) Compute the median alcohol content and international bitterness unit for each state. 
 #Plot a bar chart to compare.
 ```{r}
-medianIBU <- tapply(merged_beer$IBU, merged_beer$State, median)
-medianABV <- tapply(merged_beer$ABV, merged_beer$State, median)
+IBU <- merged_beer %>% na.omit() %>% group_by(State) %>% summarise(Median=median(IBU)) %>% arrange(Median)
+ABV <- merged_beer %>% na.omit() %>% group_by(State) %>% summarise(Median=median(ABV)) %>% arrange(Median)
 ```
-
+#Bar plot for median IBU per state
 ```{r}
-barplot(medianABV)
-barplot(medianIBU)
+ggplot(data = IBU, aes(x=State, y=Median)) +
+  geom_bar(stat = "identity", fill = "light blue") +
+  theme_clean() +
+  theme(axis.text = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  ylab("Median IBU") + ggtitle("Median IBUs per State")
+```
+#Bar plot of median ABV per state
+```{r}
+ggplot(data = ABV, aes(x=State, y=Median)) +
+  geom_bar(stat = "identity", fill = "light blue") +
+  theme_clean() +
+  theme(axis.text = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  ylab("Median ABV") + ggtitle("Median ABV per State")
 ```
 #5)Which state has the maximum alcoholic (ABV) beer?
 #Which state has the most bitter (IBU) beer?
