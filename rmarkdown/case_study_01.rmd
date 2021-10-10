@@ -23,18 +23,77 @@ dim(breweries)
 
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 ```{r}
 count(breweries, "State")
 view(breweries, "State")
 table(breweries$State)
 
 ```
+
+#2) Merge beer data with breweries data. Print first 6 observations and last 6 observations (not included in ppt deck)
+#check column names
+```{r}
+colnames(beers)
+colnames(breweries)
+#Fix beer dataset column name so that it matches the brewery dataset column name (merged by the brewery/brew ID)
+colnames(beers)[colnames(beers)=="Brewery_id"] <- "Brew_ID"
+colnames(beers)
+
+```
+```{r}
+merged_beer <- merge(breweries, beers, by="Brew_ID")
+str(merged_beer)
+```
+#Print first 6 and last 6 observations
+```{r}
+
+head(merged_beer, n=6)
+tail(merged_beer, n=6)
+```
+#3) Address the missing values in each column
+#Find NA values
+```{r}
+colSums(is.na(merged_beer))
+#I assume we should remove the NA value since it only reports ABV and IBU units...delete if not
+merged_beer <- na.omit(merged_beer)
+colSums(is.na(merged_beer))
+```
+#4) Compute the median alcohol content and international bitterness unit for each state. 
+#Plot a bar chart to compare.
+```{r}
+medianIBU <- tapply(merged_beer$IBU, merged_beer$State, median)
+medianABV <- tapply(merged_beer$ABV, merged_beer$State, median)
+```
+
+```{r}
+barplot(medianABV)
+barplot(medianIBU)
+```
+#5)Which state has the maximum alcoholic (ABV) beer?
+#Which state has the most bitter (IBU) beer?
+
+```{r}
+merged_beer[which.max(merged_beer$ABV),]
+```
+```{r}
+merged_beer[which.max(merged_beer$IBU),]
+```
+#6) Comment on the summary statistics and distribution of the ABV variable.
+```{r}
+summary(merged_beer$ABV)
+```
+#There is a wide range of ABV beers, ranging from low (0.027) to high (0.125).
+#The median ABV and mean are close, which could indicate that the distribution of ABV is symmetrical
+
+#8) Is there an apparent relationship between the bitterness of the beer and its alcoholic content? 
+#Draw a scatter plot.  Make your best judgment of a relationship and EXPLAIN your answer.
+```{r}
+ggplot(data = merged_beer, mapping=aes(x=merged_beer$ABV, y=merged_beer$IBU)) +
+  geom_point() + geom_smooth(formula = y~x,  method = lm) + ggtitle("Bitterness of Beer vs Alcohol Content") +
+  xlab("ABV (%)") + ylab("IBU") 
+```
+#There appears to be a positive correlation between ABV and IBU. I.e., as IBU increases,
+#so too does the alcohol content. 
+
+
