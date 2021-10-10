@@ -1,0 +1,153 @@
+---
+title: "Week 8 Case Study 01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploritory Data Analysis 
+
+### 1.   How many breweries are present in each state?
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+beerDF <- read.csv('..\\datasets\\Beers.csv')
+breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
+brewCountState <- breweriesDF %>% group_by(State) %>% count(State)
+brewCountState <- brewCountState %>% rename(Count = n)
+sortBrewCountState <- brewCountState %>% arrange(desc(Count))
+
+sortBrewCountState %>% ggplot(aes(x=reorder(State, -Count), y=Count, fill=State)) + geom_bar(stat='identity') + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) + labs(title='Breweries per State - descending', x='States', y='Totals') + theme(legend.position='none')
+
+breweriesDF %>% ggplot(aes(x=as.factor(State), fill=as.factor(State))) + geom_bar(width = 0.9, position = position_dodge()) + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) + labs(title='Breweries per State - alphabetic', x='States', y='Totals') + theme(legend.position='none')
+
+summary(sortBrewCountState)
+sd(sortBrewCountState$Count)
+```
+
+### 2.   Merge beer data with the breweries data. 
+Print the first 6 observations and the last six observations to check the merged file.  
+(RMD only, this does not need to be included in the presentation or the deck.)
+```{r}
+library(dplyr)
+library(tidyverse)
+beerDF <- read.csv('..\\datasets\\Beers.csv')
+breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
+
+beerDF <- beerDF %>% rename(Brew_ID = 'Brewery_id', Beer_Name = 'Name')
+breweriesDF <- breweriesDF %>% rename(Brew_Name = 'Name')
+
+beerBrewDF<- merge(beerDF,breweriesDF,by=c("Brew_ID"))
+head(beerBrewDF, n=6)
+tail(beerBrewDF, n=6)
+```
+
+
+### 3.   Address the missing values in each column.
+```{r beerBrewDF}
+beerBrewDF
+total <-  dim(beerBrewDF)[1]
+omitBeerBrewDF <- na.omit(beerBrewDF)
+omitBeerBrewDF
+noNaVals <- dim(omitBeerBrewDF)[1]
+1 - (noNaVals / total)
+omitBeerBrewDF
+repBeerBrewDF <- beerBrewDF %>% mutate(IBU = replace_na(IBU, 0), ABV = replace_na(ABV, 0))
+dim(repBeerBrewDF)
+repBeerBrewDF
+dim(na.omit(repBeerBrewDF))
+```
+
+### 4.   Compute the median alcohol content and international bitterness unit for each state. 
+Plot a bar chart to compare.
+```{r repBeerBrewDF}
+library(scales)
+stateABV <- repBeerBrewDF %>% select(State, ABV)
+stateABV[stateABV==0] <- NA
+stateABV <- na.omit(stateABV)
+stateABV <- with(stateABV, aggregate(list(ABV), by = list(State), FUN = function(x) { tmp.mean = mean(x, na.rm = TRUE) } ))
+stateABV <- stateABV %>% rename(State=1, ABV=2)
+
+
+stateABV %>% ggplot(aes(x=as.factor(State), y=ABV, fill=as.factor(State))) + geom_bar(stat='identity') + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1), legend.position='none') + labs(title='Mean ABV per State', x='States', y='ABV') + scale_y_continuous(limits=c(.04,.08),oob = rescale_none)
+
+stateIBU <- repBeerBrewDF %>% select(State, IBU)
+stateIBU[stateIBU==0] <- NA
+stateIBU <- na.omit(stateIBU)
+stateIBU <- with(stateIBU, aggregate(list(IBU), by = list(State), FUN = function(x) { stateIBU.mean = mean(x) } ))
+stateIBU <- stateIBU %>% rename(State=1, IBU=2)
+
+stateIBU %>% ggplot(aes(x=as.factor(State), y=IBU, fill=as.factor(State))) + geom_bar(stat='identity') + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1), legend.position='none') + labs(title='Mean IBU per State', x='States', y='IBU')  + scale_y_continuous(limits=c(20,70),oob = rescale_none)
+
+```
+
+### 5.   Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
+```{r repBeerBrewDF}
+repBeerBrewDF
+maxABV <- repBeerBrewDF[which.max(repBeerBrewDF$ABV),]
+maxABV$State
+maxABV$ABV
+maxIBU <- repBeerBrewDF[which.max(repBeerBrewDF$IBU),]
+maxIBU$State
+maxIBU$IBU
+
+```
+### 6.   Comment on the summary statistics and distribution of the ABV variable.
+```{r}
+#summary(repBeerBrewDF$ABV)
+
+#boxplot(repBeerBrewDF$ABV, data=repBeerBrewDF, varwidth = TRUE, horizontal = TRUE)
+
+allABV <- repBeerBrewDF %>% select(State, ABV)
+allABV[allABV==0] <- NA
+abvOmit <- na.omit(allABV)
+dim(abvOmit)
+summary(abvOmit)
+
+boxplot(abvOmit$ABV, data=abvOmit, varwidth = TRUE, horizontal = TRUE, xlab='ABV Boxplot') 
+var(abvOmit$ABV)
+sd(abvOmit$ABV)
+
+hist(abvOmit$ABV)
+
+x <- abvOmit$ABV
+xfit <- seq(min(x),max(x),length=40)
+yfit <- dnorm(xfit,mean=mean(x),sd=sd(x))
+yfit <- yfit*diff(h$mids[1:2])*length(x)
+h <- hist(x, breaks=10)
+plot(h, xlab="ABV", main="ABV Histogram with Normal Curve") + lines(xfit, yfit, col="blue", lwd=2)
+d <- density(x)
+plot(d)
+
+```
+
+### 7.   Is there an apparent relationship between the bitterness of the beer and its alcoholic content?
+Draw a scatter plot.  Make your best judgment of a relationship 
+and EXPLAIN your answer.
+```{r omitBeerBrewDF}
+dim(omitBeerBrewDF)
+omitBeerBrewDF
+
+ggplot(omitBeerBrewDF,aes(ABV, IBU)) +  geom_point(color='red') +  geom_smooth(method = "lm", se = TRUE)
+test <- data.frame(ABV=as.numeric(omitBeerBrewDF$ABV), IBU=as.numeric(omitBeerBrewDF$IBU))
+mtest <- matrix(test)
+mtest
+heatmap(mAbvIbu)
+```
+
+
+### 8   Budweiser would also like to investigate the difference with respect to IBU and 
+ABV between IPAs (India Pale Ales) and other types of Ale (any beer with "Ale" in 
+its name other than IPA).  You decide to use KNN classification to investigate this 
+relationship.  Provide statistical evidence one way or the other. You can of course 
+assume your audience is comfortable with percentages ... KNN is very easy to 
+understand conceptually.
+
+### 9. Knock their socks off!  Find one other useful inference from the data that you feel 
+Budweiser may be able to find value in.  You must convince them why it is 
+important and back up your conviction with appropriate statistical evidence. 
+
