@@ -30,6 +30,83 @@ view(breweries, "State")
 table(breweries$State)
 
 ```
+#Plot missing values
+```{r}
+plot_missing(beers)
+```
+```{r}
+plot_missing(breweries) 
+```
+# Fix column titles to match between beer and brewery data sets
+```{r}
+colnames(beers)[colnames(beers)=="Brewery_id"] <- "Brew_ID"
+colnames(breweries)[colnames(breweries)=="Brewery_id"] <- "Brew_ID"
+```
+
+#Load map data for US states, fix "region" column label to "State
+```{r}
+US_States <- map_data("state")
+
+colnames(US_States)[colnames(US_States)=="region"] <- "State"
+```
+
+#Group matching data entries by state, 
+```{r}
+BSDF <-
+  breweries %>% group_by(State) %>% distinct(Brew_ID) 
+```
+#Create new dataset with State + number of breweries, rename column names
+```{r}
+BrewCount <- aggregate(Brew_ID ~ State, breweries, length)
+names(BrewCount) <-
+  c("State", "Breweries")
+```
+#Remove extra spaces around state names that were causing grouping issues, put all states in lower case to match between datasets
+
+```{r}
+BrewCount$State <-
+  trim(BrewCount$State, recode.factor = TRUE) # remove extra space around entries
+BrewCount$State <-
+  tolower(abbr2state(BrewCount$State))
+```
+#Merge US state data with number of breweries per state by "State"
+```{r}
+BrewMap <-
+  left_join(US_States, BrewCount, by = "State")
+```
+#Combine longitude and latitude values for single states
+```{r}
+Coords <-
+  aggregate(
+    cbind(long, lat) ~ State,
+    data = BrewMap,
+    FUN = function(x)
+      mean(range(x))) 
+```
+#Combine longitude and latitude values for single states, creating an averaged coordinate
+```{r}
+Coords2 <- BrewMap %>% group_by(State) %>%
+  summarize_at(vars(long, lat), ~ mean(range(.)))
+all.equal(Coords, as.data.frame(Coords2))
+```
+#Plot brewery count data onto US map, intensity of color correlates to number of breweries within each state
+```{r}
+ggplot(data = BrewMap) +
+  geom_path(aes(x = long, y = lat, group = group), color = "blue") +
+  geom_polygon(aes(
+    x = long,
+    y = lat,
+    group = group,
+    fill = Breweries), color = "red") +
+  coord_map() +
+  scale_fill_gradient(low = "light blue" , high = "dark blue") + 
+  ggtitle("Breweries per State") +
+  theme_void() +
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank())
+```
 
 #2) Merge beer data with breweries data. Print first 6 observations and last 6 observations (not included in ppt deck)
 #check column names
