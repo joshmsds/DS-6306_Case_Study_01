@@ -37,6 +37,8 @@ and EXPLAIN your answer.
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
+library(usdata)
+library(lava)
 
 #get the data from the file
 breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
@@ -61,6 +63,46 @@ breweriesDF %>% ggplot(aes(x=as.factor(State), fill=as.factor(State))) + geom_ba
 #summary(sortBrewCountState)
 #get the standard deviation 
 #sd(sortBrewCountState$Count)
+
+## broken for now
+#breweries <- breweriesDF
+#US_States <- map_data("state")
+#colnames(US_States)[colnames(US_States)=="region"] <- "State"
+#
+#BSDF <- breweries %>% group_by(State) %>% distinct(Brew_ID) 
+#
+#BrewCount <- aggregate(Brew_ID ~ State, breweries, length)
+#
+#names(BrewCount) <- c("State", "Breweries")
+#
+#BrewCount$State <- trim(BrewCount$State, recode.factor = TRUE) 
+#
+#BrewCount$State <- tolower(abbr2state(BrewCount$State))
+#
+#BrewMap <- left_join(US_States, BrewCount, by = "State")
+#
+#Coords <- aggregate(cbind(long, lat) ~ State, data = BrewMap, FUN = function(x) mean(range(x))) 
+#
+##bug here with vars() anonymous namespace, looks like it is losing track of lat and long objects
+#Coords2 <- BrewMap %>% group_by(State) %>% summarize_at(vars(long, lat), ~ mean(range(.))) 
+#
+#all.equal(Coords, as.data.frame(Coords2))
+#
+#ggplot(data = BrewMap) +
+#  geom_path(aes(x = long, y = lat, group = group), color = "blue") +
+#  geom_polygon(aes(
+#    x = long,
+#    y = lat,
+#    group = group,
+#    fill = Breweries), color = "red") +
+#  coord_map() +
+#  scale_fill_gradient(low = "light blue" , high = "dark blue") + 
+#  ggtitle("Breweries per State") +
+#  theme_void() +
+#    theme(plot.title = element_text(hjust = 0.5),
+#          axis.title = element_blank(),
+#          axis.ticks = element_blank(),
+#          axis.text = element_blank())
 ```
 
 ### 2. Merge beer data with the breweries data 
@@ -106,7 +148,7 @@ repBeerBrewDF <- beerBrewDF %>% mutate(IBU = replace_na(IBU, 0), ABV = replace_n
 
 ### 4. Compute the median alcohol content and international bitterness unit for each state 
 This is farily straight forward. However, we need to be sure to replace all `0` values with `NA` and drop them prior to graphing. Also, we will scale the `y` axis and rotate the labels on the `x` axis so that things are a little more readable. 
-```{r repBeerBrewDF}
+```{r message=FALSE, warning=FALSE}
 #library for scaling the y axis
 library(scales)
 
