@@ -4,139 +4,249 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Exploritory Data Analysis 
+## Exploratory Data Analysis 
+In this section we will perform an exploratory data analysis (EDA) of the `Beers` and `Breweries` datasets. These datasets can be found in the `datasets` directory for the project. The project will attempt to investigate the data by performing the following steps:
 
-### 1.   How many breweries are present in each state?
-```{r}
+ - Determine the number of breweries present in each state.
+
+ - Merge beer data with the breweries data. Print the first 6 observations and the 
+last six observations to check the merged file. 
+
+ - Address the missing values in each column.
+
+ - Compute the median alcohol content and international bitterness unit for each 
+state. Plot a bar chart to compare.
+
+ - Identify the state with the maximum alcoholic (ABV) beer. Identify which state has the most 
+bitter (IBU) beer. 
+
+ - Comment on the summary statistics and distribution of the ABV variable.
+
+ - Identify any relationship between the bitterness of the beer and its 
+alcoholic content. Draw a scatter plot.  Make your best judgment of a relationship 
+and EXPLAIN your answer.
+
+ - Investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) and other types of Ale (any beer with "Ale" in its name other than IPA).  Use KNN classificationto investigate this relationship.  Provide statistical evidence one way or the other. 
+
+### 1. Determine the number of breweries present in each state
+```{r message=FALSE, warning=FALSE}
+#required libraries
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
 
-beerDF <- read.csv('..\\datasets\\Beers.csv')
+#get the data from the file
 breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
+
+#group the breweries data by state
 brewCountState <- breweriesDF %>% group_by(State) %>% count(State)
+
+#rename the column
 brewCountState <- brewCountState %>% rename(Count = n)
+
+#sort the dataframe
 sortBrewCountState <- brewCountState %>% arrange(desc(Count))
 
+#plot the sorted data with ggplot and adjust the labels so we can read them
 sortBrewCountState %>% ggplot(aes(x=reorder(State, -Count), y=Count, fill=State)) + geom_bar(stat='identity') + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) + labs(title='Breweries per State - descending', x='States', y='Totals') + theme(legend.position='none')
 
+#graph the states again, this time alphabetic 
 breweriesDF %>% ggplot(aes(x=as.factor(State), fill=as.factor(State))) + geom_bar(width = 0.9, position = position_dodge()) + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) + labs(title='Breweries per State - alphabetic', x='States', y='Totals') + theme(legend.position='none')
 
-summary(sortBrewCountState)
-sd(sortBrewCountState$Count)
+##unused
+#get some summary statistics 
+#summary(sortBrewCountState)
+#get the standard deviation 
+#sd(sortBrewCountState$Count)
 ```
 
-### 2.   Merge beer data with the breweries data. 
-Print the first 6 observations and the last six observations to check the merged file.  
-(RMD only, this does not need to be included in the presentation or the deck.)
+### 2. Merge beer data with the breweries data 
+We will merge the data from the two files into a single dataset. This dataset will be used for further analysis. 
+
 ```{r}
-library(dplyr)
-library(tidyverse)
+#get the data for each dataset
 beerDF <- read.csv('..\\datasets\\Beers.csv')
 breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
 
+#rename the brewery_id and name columns so we can merge later
 beerDF <- beerDF %>% rename(Brew_ID = 'Brewery_id', Beer_Name = 'Name')
 breweriesDF <- breweriesDF %>% rename(Brew_Name = 'Name')
 
+#merge the data on Brew_ID column name
 beerBrewDF<- merge(beerDF,breweriesDF,by=c("Brew_ID"))
+
+#print out the top 6 rows
 head(beerBrewDF, n=6)
+#print out the bottom 6 rows
 tail(beerBrewDF, n=6)
 ```
-
-
-### 3.   Address the missing values in each column.
+### 3. Address the missing values in each column
+To address the missing values in each column we decided to try and keep the data and not use `na.omit`. To keep the rows with `NA` values we will replace `NA` with `0`. This will allow us to retain approximately 40% of the dataset for various uses.   
 ```{r beerBrewDF}
-beerBrewDF
-total <-  dim(beerBrewDF)[1]
-omitBeerBrewDF <- na.omit(beerBrewDF)
-omitBeerBrewDF
-noNaVals <- dim(omitBeerBrewDF)[1]
-1 - (noNaVals / total)
-omitBeerBrewDF
+##unused
+#Here we are checking to see how much data will be lost if we drop all rows with missing data
+#total <-  dim(beerBrewDF)[1]
+#omitBeerBrewDF <- na.omit(beerBrewDF)
+#omitBeerBrewDF
+#noNaVals <- dim(omitBeerBrewDF)[1]
+#1 - (noNaVals / total)
+
+#replace the NA values in the IBU and ABV columns with 0
 repBeerBrewDF <- beerBrewDF %>% mutate(IBU = replace_na(IBU, 0), ABV = replace_na(ABV, 0))
-dim(repBeerBrewDF)
-repBeerBrewDF
-dim(na.omit(repBeerBrewDF))
+
+##unused
+#get the dimensions
+#dim(repBeerBrewDF)
+#drop all na values and check we didn't lose anything
+#dim(na.omit(repBeerBrewDF))
 ```
 
-### 4.   Compute the median alcohol content and international bitterness unit for each state. 
-Plot a bar chart to compare.
+### 4. Compute the median alcohol content and international bitterness unit for each state 
+This is farily straight forward. However, we need to be sure to replace all `0` values with `NA` and drop them prior to graphing. Also, we will scale the `y` axis and rotate the labels on the `x` axis so that things are a little more readable. 
 ```{r repBeerBrewDF}
+#library for scaling the y axis
 library(scales)
+
+#get only the data we are interested in (state name and abv values)
 stateABV <- repBeerBrewDF %>% select(State, ABV)
+#replace abv values with na
 stateABV[stateABV==0] <- NA
+#drop the na values
 stateABV <- na.omit(stateABV)
+#calculate the mean for each state 
 stateABV <- with(stateABV, aggregate(list(ABV), by = list(State), FUN = function(x) { tmp.mean = mean(x, na.rm = TRUE) } ))
+#rename the columns so it is pretty 
 stateABV <- stateABV %>% rename(State=1, ABV=2)
 
-
+#graph the ABV data with the y axis scaled and the x axis labels rotated
 stateABV %>% ggplot(aes(x=as.factor(State), y=ABV, fill=as.factor(State))) + geom_bar(stat='identity') + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1), legend.position='none') + labs(title='Mean ABV per State', x='States', y='ABV') + scale_y_continuous(limits=c(.04,.08),oob = rescale_none)
 
+#again, only get the data we are interested in (state name and ibu)
 stateIBU <- repBeerBrewDF %>% select(State, IBU)
+#replace the ibu 0 values with na
 stateIBU[stateIBU==0] <- NA
+#drop the na values
 stateIBU <- na.omit(stateIBU)
+#group by the state name and calculate the mean
 stateIBU <- with(stateIBU, aggregate(list(IBU), by = list(State), FUN = function(x) { stateIBU.mean = mean(x) } ))
+#rename the columns so it is pretty 
 stateIBU <- stateIBU %>% rename(State=1, IBU=2)
 
+#graph the data in the same way as previous
 stateIBU %>% ggplot(aes(x=as.factor(State), y=IBU, fill=as.factor(State))) + geom_bar(stat='identity') + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1), legend.position='none') + labs(title='Mean IBU per State', x='States', y='IBU')  + scale_y_continuous(limits=c(20,70),oob = rescale_none)
 
 ```
 
-### 5.   Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
+### 5. Identify the state with the maximum ABV and the state with the maximum IBU 
 ```{r repBeerBrewDF}
-repBeerBrewDF
+#select the row with the max abv value
 maxABV <- repBeerBrewDF[which.max(repBeerBrewDF$ABV),]
-maxABV$State
-maxABV$ABV
+
+##unused
+#get the state name
+#maxABV$State
+#get the abv value
+#maxABV$ABV
+
+#select the row with the max ibu value
 maxIBU <- repBeerBrewDF[which.max(repBeerBrewDF$IBU),]
-maxIBU$State
-maxIBU$IBU
 
+##unused
+#get the state name
+#maxIBU$State
+#get the ibu value
+#maxIBU$IBU
 ```
-### 6.   Comment on the summary statistics and distribution of the ABV variable.
-```{r}
-#summary(repBeerBrewDF$ABV)
+The state with the maximum ABV value is `r maxABV$State` with a value of `r maxABV$ABV`. 
+The state with the maximum IBU value is `r maxIBU$State` with a value of `r maxIBU$IBU`. 
 
+### 6.   Comment on the summary statistics and distribution of the ABV variable.
+To generate the summary statistics of the ABV variable we remove all rows with `0` and use the `Summary` function. This function lists the 5 number summary. To graphically inspect the data we generate a boxplot of the ABV variable. Additionally, we used a histogram graph to show the distribution of the ABV data. When the histogram is combined with a standard normal distribution we can see the slight right-skew in the data. 
+```{r}
+##unused
+#summary(repBeerBrewDF$ABV)
 #boxplot(repBeerBrewDF$ABV, data=repBeerBrewDF, varwidth = TRUE, horizontal = TRUE)
 
+#only get the data we are intereste in (state name and abv values)
 allABV <- repBeerBrewDF %>% select(State, ABV)
+#replace 0 with na
 allABV[allABV==0] <- NA
+#drop the na data
 abvOmit <- na.omit(allABV)
-dim(abvOmit)
+
+##unused
+#dim(abvOmit)
+
+#show the summary stats
 summary(abvOmit)
 
+#generate a boxplot
 boxplot(abvOmit$ABV, data=abvOmit, varwidth = TRUE, horizontal = TRUE, xlab='ABV Boxplot') 
-var(abvOmit$ABV)
-sd(abvOmit$ABV)
 
-hist(abvOmit$ABV)
+##unused
+#var(abvOmit$ABV)
+#sd(abvOmit$ABV)
+#hist(abvOmit$ABV)
 
+#Only get abv values
 x <- abvOmit$ABV
+#generate a histogram with 10 buckets
+ABV<-x
+h <- hist(ABV, breaks=10, main='ABV Histogram')
+
+#generate the x boundaries
 xfit <- seq(min(x),max(x),length=40)
+#generate the normal curve
 yfit <- dnorm(xfit,mean=mean(x),sd=sd(x))
+#fit the data 
 yfit <- yfit*diff(h$mids[1:2])*length(x)
-h <- hist(x, breaks=10)
+#start making the plot of the line with the histogram
 plot(h, xlab="ABV", main="ABV Histogram with Normal Curve") + lines(xfit, yfit, col="blue", lwd=2)
+#create a density plot
 d <- density(x)
-plot(d)
+#show the thing
+plot(d, main='Density plot of ABV')
 
 ```
 
-### 7.   Is there an apparent relationship between the bitterness of the beer and its alcoholic content?
-Draw a scatter plot.  Make your best judgment of a relationship 
-and EXPLAIN your answer.
-```{r omitBeerBrewDF}
-dim(omitBeerBrewDF)
-omitBeerBrewDF
+### 7. Identify any relationship between the bitterness of the beer and its alcoholic content. Draw a scatter plot.  Make your best judgment of a relationship and EXPLAIN your answer.
+Relationships between the data can be seen with the linear regression line fit to the data. The positive slope of the line is indicative of a positive relationship between ABV and IBU variables. The grey area around the line is the standard error. Additionally, the correlation matrix shows the same relationship with the dark blue value. 
 
+```{r message=FALSE, warning=FALSE}
+#required for correlation matrix
+library(corrplot)
+
+#get the data
+beerDF <- read.csv('..\\datasets\\Beers.csv')
+breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
+
+#rename the brewery_id and name columns so we can merge later
+beerDF <- beerDF %>% rename(Brew_ID = 'Brewery_id', Beer_Name = 'Name')
+breweriesDF <- breweriesDF %>% rename(Brew_Name = 'Name')
+
+#merge the data on Brew_ID column name
+beerBrewDF<- merge(beerDF,breweriesDF,by=c("Brew_ID"))
+
+#omit all na values
+omitBeerBrewDF <- na.omit(beerBrewDF)
+
+#generate a scatterplot with linear regression model fit to it
 ggplot(omitBeerBrewDF,aes(ABV, IBU)) +  geom_point(color='red') +  geom_smooth(method = "lm", se = TRUE)
-test <- data.frame(ABV=as.numeric(omitBeerBrewDF$ABV), IBU=as.numeric(omitBeerBrewDF$IBU))
-mtest <- matrix(test)
-mtest
-heatmap(mAbvIbu)
+
+#get the avb and ibu data 
+abvibuDF <- data.frame(ABV=as.numeric(omitBeerBrewDF$ABV), IBU=as.numeric(omitBeerBrewDF$IBU))
+#create a matrix of the data
+cormat <- round(cor(abvibuDF),2)
+#show the matrix table
+cor(abvibuDF)
+#plot as heat map data
+corrplot(cormat, cormattype = "upper", order = "hclust", tl.col = "black", tl.srt = 45, title='Correlation Matrix', mar=c(0,0,1,0)) 
+##unused
+#ggplot(data = cormat, aes(x=ABV, y=IBU, fill=value)) + geom_tile()
+#heatmap(mAbvIbu)
 ```
 
 
@@ -146,6 +256,7 @@ its name other than IPA).  You decide to use KNN classification to investigate t
 relationship.  Provide statistical evidence one way or the other. You can of course 
 assume your audience is comfortable with percentages ... KNN is very easy to 
 understand conceptually.
+
 
 ### 9. Knock their socks off!  Find one other useful inference from the data that you feel 
 Budweiser may be able to find value in.  You must convince them why it is 
