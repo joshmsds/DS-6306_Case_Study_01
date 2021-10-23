@@ -34,11 +34,29 @@ and EXPLAIN your answer.
 ### 1. Determine the number of breweries present in each state
 ```{r message=FALSE, warning=FALSE}
 #required libraries
+library(plyr)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
-library(usdata)
 library(lava)
+library(caret)
+library(caTools)
+library(class)
+library(DataExplorer)
+library(e1071)
+library(fiftystater)
+library(ggthemes)
+library(glue)
+library(mapdata)
+library(mapproj)
+library(maps)
+library(tibble)
+library(tidyr)
+library(trimr)
+library(usdata)
+library(scales)
+library(corrplot)
+
 
 #get the data from the file
 breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
@@ -58,51 +76,46 @@ sortBrewCountState %>% ggplot(aes(x=reorder(State, -Count), y=Count, fill=State)
 #graph the states again, this time alphabetic 
 breweriesDF %>% ggplot(aes(x=as.factor(State), fill=as.factor(State))) + geom_bar(width = 0.9, position = position_dodge()) + theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) + labs(title='Breweries per State - alphabetic', x='States', y='Totals') + theme(legend.position='none')
 
-##unused
-#get some summary statistics 
-#summary(sortBrewCountState)
-#get the standard deviation 
-#sd(sortBrewCountState$Count)
+#make new df 
+breweries <- breweriesDF
 
-## broken for now
-#breweries <- breweriesDF
-#US_States <- map_data("state")
-#colnames(US_States)[colnames(US_States)=="region"] <- "State"
-#
-#BSDF <- breweries %>% group_by(State) %>% distinct(Brew_ID) 
-#
-#BrewCount <- aggregate(Brew_ID ~ State, breweries, length)
-#
-#names(BrewCount) <- c("State", "Breweries")
-#
-#BrewCount$State <- trim(BrewCount$State, recode.factor = TRUE) 
-#
-#BrewCount$State <- tolower(abbr2state(BrewCount$State))
-#
-#BrewMap <- left_join(US_States, BrewCount, by = "State")
-#
-#Coords <- aggregate(cbind(long, lat) ~ State, data = BrewMap, FUN = function(x) mean(range(x))) 
-#
-##bug here with vars() anonymous namespace, looks like it is losing track of lat and long objects
-#Coords2 <- BrewMap %>% group_by(State) %>% summarize_at(vars(long, lat), ~ mean(range(.))) 
-#
-#all.equal(Coords, as.data.frame(Coords2))
-#
-#ggplot(data = BrewMap) +
-#  geom_path(aes(x = long, y = lat, group = group), color = "blue") +
-#  geom_polygon(aes(
-#    x = long,
-#    y = lat,
-#    group = group,
-#    fill = Breweries), color = "red") +
-#  coord_map() +
-#  scale_fill_gradient(low = "light blue" , high = "dark blue") + 
-#  ggtitle("Breweries per State") +
-#  theme_void() +
-#    theme(plot.title = element_text(hjust = 0.5),
-#          axis.title = element_blank(),
-#          axis.ticks = element_blank(),
-#          axis.text = element_blank())
+#get the state data
+US_States <- map_data("state")
+
+#rename the column to state
+colnames(US_States)[colnames(US_States)=="region"] <- "State"
+
+#get number of breweries per state
+BrewCount <- aggregate(Brew_ID ~ State, breweries, length)
+
+#rename the column
+names(BrewCount) <- c("State", "Breweries")
+
+#trim off whitespace
+BrewCount$State <- lava::trim(BrewCount$State, recode.factor = TRUE) 
+
+#rename the state from abbreviation
+BrewCount$State <- tolower(abbr2state(BrewCount$State))
+
+#create the breweries map
+BrewMap <- left_join(US_States, BrewCount, by = "State")
+
+#graph it
+ggplot(data = BrewMap) +
+  geom_path(aes(x = long, y = lat, group = group), color = "blue") +
+  geom_polygon(aes(
+    x = long,
+    y = lat,
+    group = group,
+    fill = Breweries), color = "red") +
+  coord_map() +
+  scale_fill_gradient(low = "light blue" , high = "dark blue") + 
+  ggtitle("Breweries per State") +
+  theme_void() +
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank())
 ```
 
 ### 2. Merge beer data with the breweries data 
@@ -136,8 +149,14 @@ To address the missing values in each column we decided to try and keep the data
 #noNaVals <- dim(omitBeerBrewDF)[1]
 #1 - (noNaVals / total)
 
+#many things are missing...
+plot_missing(beerBrewDF, title='Misssing data points')
+
 #replace the NA values in the IBU and ABV columns with 0
 repBeerBrewDF <- beerBrewDF %>% mutate(IBU = replace_na(IBU, 0), ABV = replace_na(ABV, 0))
+
+#nothing is missing 
+plot_missing(repBeerBrewDF, title='Missing data points with 0 set for NA')
 
 ##unused
 #get the dimensions
@@ -150,7 +169,7 @@ repBeerBrewDF <- beerBrewDF %>% mutate(IBU = replace_na(IBU, 0), ABV = replace_n
 This is farily straight forward. However, we need to be sure to replace all `0` values with `NA` and drop them prior to graphing. Also, we will scale the `y` axis and rotate the labels on the `x` axis so that things are a little more readable. 
 ```{r message=FALSE, warning=FALSE}
 #library for scaling the y axis
-library(scales)
+
 
 #get only the data we are interested in (state name and abv values)
 stateABV <- repBeerBrewDF %>% select(State, ABV)
@@ -259,7 +278,7 @@ Relationships between the data can be seen with the linear regression line fit t
 
 ```{r message=FALSE, warning=FALSE}
 #required for correlation matrix
-library(corrplot)
+
 
 #get the data
 beerDF <- read.csv('..\\datasets\\Beers.csv')
@@ -292,15 +311,197 @@ corrplot(cormat, cormattype = "upper", order = "hclust", tl.col = "black", tl.sr
 ```
 
 
-### 8   Budweiser would also like to investigate the difference with respect to IBU and 
-ABV between IPAs (India Pale Ales) and other types of Ale (any beer with "Ale" in 
-its name other than IPA).  You decide to use KNN classification to investigate this 
-relationship.  Provide statistical evidence one way or the other. You can of course 
-assume your audience is comfortable with percentages ... KNN is very easy to 
-understand conceptually.
+### 8   Investigate the difference with respect to IBU and ABV between IPAs and other types of Ale
+Use KNN classification to investigate this relationship.  Provide statistical evidence one way or the other. 
 
+
+```{r message=FALSE, warning=FALSE}
+
+#identify the items that are IPA
+IPA <- omitBeerBrewDF[grep("\\sIPA", omitBeerBrewDF$Style, ignore.case = T),]
+
+#identify the items that are ale
+Ale <- omitBeerBrewDF[grep("\\sAle", omitBeerBrewDF$Style, ignore.case = T),]
+
+#create a new df for ipa
+test_IPA <- IPA %>% select(IBU, ABV)
+
+#set the type for later
+test_IPA$type="IPA"
+
+#create a new df for ale
+test_Ale <- Ale %>% select(IBU, ABV)
+
+#set the type for later
+test_Ale$type="Ale"
+
+#join the two df
+test <- rbind(test_Ale, test_IPA)
+
+#set the seed so we can have repeatable tests
+set.seed(100)
+
+#using an 80/20 train test split
+splitPerc = .8
+
+#split the data 
+split = sample(1:dim(test)[1],round(splitPerc * dim(test)[1]))
+
+#create the training bucket
+training = test[split,]
+
+#create the test bucket
+testing = test[-split,]
+
+#create a data frame to hold the k value results
+acc <- data.frame(accuracy = numeric(100), k=numeric(100))
+for (i in 1:100) {
+  # train and classify the data 
+  classify = knn(training[,c(1,2)],
+                 testing[,c(1,2)],
+                 training$type,
+                 prob = TRUE,
+                 k=i)
+  #get the confusion matrix for the test  
+  conf = confusionMatrix(table(classify, testing$type))
+  
+  #save our accuracy 
+  acc$accuracy[i] <-  conf$overall[1]
+  
+  #save the k value 
+  acc$k[i] <- i
+  
+}
+
+#plot our k to see how it went
+plot(acc$k,acc$accuracy, type = "l", xlab = "k Value", ylab='Accuracy')
+
+#get the best value for k
+best <- acc[which.max(acc$accuracy),]
+
+#run knn again with the best value we found for k
+knnipa <- knn(training[, c(1:2)], testing[, c(1:2)], training$type,k = best$k, prob = TRUE)
+
+#generate the confusion matrix for the best k 
+ipamatrix = confusionMatrix(table(knnipa, testing$type))
+ipamatrix
+
+#create df with predicted data
+plot.df = data.frame(testing, predicted = knnipa)
+
+#set our x, y, and predicted data 
+plot.df1 = data.frame(x = plot.df$IBU, 
+                      y = plot.df$ABV, 
+                      predicted = plot.df$predicted)
+
+#function to get the point subset
+find_hull = function(df) df[chull(df$x, df$y), ]
+
+#get the bounds of each group
+boundary = ddply(plot.df1, .variables = "predicted", .fun = find_hull)
+
+#graph the knn boundaries for each class
+ggplot(plot.df, aes(IBU, ABV, color = predicted, fill = predicted)) + 
+  geom_point(size = 1) + 
+  geom_polygon(data = boundary, aes(x,y), alpha = 0.5)
+```
 
 ### 9. Knock their socks off!  Find one other useful inference from the data that you feel 
 Budweiser may be able to find value in.  You must convince them why it is 
 important and back up your conviction with appropriate statistical evidence. 
+```{r message=FALSE, warning=FALSE}
 
+merged_beer <- omitBeerBrewDF
+ggplot(data = merged_beer) +
+  geom_col(mapping = aes(x=ABV, y=IBU, fill = Ounces)) + 
+  facet_wrap(~Ounces)
+
+ggplot(data = merged_beer) +
+  geom_point(mapping = aes(x=ABV, y=IBU)) + 
+  facet_wrap(~Ounces)
+
+ggplot(data = merged_beer, aes(x=ABV*100, y=IBU)) + geom_point() + 
+  geom_smooth(method = lm) +
+  facet_wrap(~Ounces) + ggtitle("ABV vs IBU: Trends per Serving Size") +
+  xlab("ABV (%)")
+
+
+#get the data for each dataset
+beerDF <- read.csv('..\\datasets\\Beers.csv')
+breweriesDF <- read.csv('..\\datasets\\Breweries.csv')
+
+#rename the brewery_id and name columns so we can merge later
+beerDF <- beerDF %>% rename(Brew_ID = 'Brewery_id', Beer_Name = 'Name')
+breweriesDF <- breweriesDF %>% rename(Brew_Name = 'Name')
+
+#merge the data on Brew_ID column name
+beerBrewDF<- merge(beerDF,breweriesDF,by=c("Brew_ID"))
+
+#simple classification
+IPA <- beerBrewDF[grep("\\sIPA", beerBrewDF$Style, ignore.case = T),]
+IPA$Type = "IPA"
+ALE <- beerBrewDF[grep("\\sale", beerBrewDF$Style, ignore.case = T),]
+ALE$Type = "ALE"
+LAGER <- beerBrewDF[grep("lager", beerBrewDF$Style, ignore.case = T),]
+LAGER$Type = 'LAGER'
+PORTER <- beerBrewDF[grep("Porter", beerBrewDF$Style, ignore.case = T),]
+PORTER$Type = 'PORT'
+HEFE <- beerBrewDF[grep("Hefew", beerBrewDF$Style, ignore.case = T),]
+HEFE$Type = 'HEF'
+CIDER <- beerBrewDF[grep("Cider", beerBrewDF$Style, ignore.case = T),]
+CIDER$Type = 'CIDER'
+STOUT <- beerBrewDF[grep("stout", beerBrewDF$Style, ignore.case = T),]
+STOUT$Type = 'STOUT'
+PILS <- beerBrewDF[grep("Pilsner", beerBrewDF$Style, ignore.case = T),]
+PILS$Type = 'PILS'
+simpleStyleDF <- rbind(ALE, IPA, LAGER, PORTER, HEFE, CIDER, STOUT, PILS)
+simpleStyleDF %>% 
+  group_by(factor(Type)) %>%
+  summarise(no_rows = length(Type))
+
+
+#get the state data
+US_States <- map_data("state")
+
+#rename the column to state
+colnames(US_States)[colnames(US_States)=="region"] <- "State"
+
+#split the dataframe into a list of dataframes separated by type
+t <- split(simpleStyleDF, simpleStyleDF$Type)
+
+for (df in t){
+  #count number of items
+  BrewCount <- aggregate(Brew_ID ~ State, df, length)
+
+  #rename the column
+  names(BrewCount) <- c("State", "beers")
+
+  #trim off whitespace
+  BrewCount$State <- lava::trim(BrewCount$State, recode.factor = TRUE) 
+
+  #rename the state from abbreviation
+  BrewCount$State <- tolower(abbr2state(BrewCount$State))
+
+  #create the beer map for this type of beer
+  BrewMap <- left_join(US_States, BrewCount, by = "State")
+
+  #graph it
+  plt <- ggplot(data = BrewMap) +
+    geom_path(aes(x = long, y = lat, group = group), color = "blue") +
+    geom_polygon(aes(
+      x = long,
+      y = lat,
+      group = group,
+      fill = beers), color = "red") +
+    coord_map() +
+    scale_fill_gradient(low = "light blue" , high = "dark blue") + 
+    ggtitle(paste(df$Type, "Beers per State", sep=' ')) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank()) 
+  print(plt)
+}
+
+```
