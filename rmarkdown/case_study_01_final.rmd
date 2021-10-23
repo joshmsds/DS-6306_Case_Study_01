@@ -7,6 +7,15 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+# Introduction
+For this case study, we investigated two datasets; a Beers dataset contained information for 2,410 craft beers while the Breweries dataset contained information for 558 breweries.
+
+Through the analysis, we found that there were several states with few breweries present where the creation of a new facility could potentially create more income. In addition, we analyzed the correlation between IBU and ABV and found that as IBU increased, so too did ABV, inferring that as bitterness increases so too does alcohol content.
+
+We also investigated the median IBU and ABV per state, which was remarkably close to the mean, indicating that the distribution was symmetrical. We explored the trends of IBU and ABV between IPAs and Ales and found that we could discern the two types of beers with an accuracy of 88% based on IBU and ABV units when using KNN as the classifier, where k=5 produced the highest accuracy. However, since Budweiser trends towards lager-style beers, we thought it would be best to focus our analysis on where Budweiser could build a facility, or purchase an existing facility, in a region that preferred lower IBU and ABV beers.
+
+In order to find the best possible target state, we investigated the types of beers that are most popular per state. We found that cider was underrepresented in most states, with exceptions for Michigan and Oregon. Next, we looked at lager and pilsner-type beers per state and found that there were no facilities for these types of beers in several Southeastern states. We also looked at the correlation between ABV and serving size and found that there was a preference for 4-8 oz servings with alcohol content between 4-7% in the Southeastern US.
+
 ## Exploratory Data Analysis 
 In this section we will perform an exploratory data analysis (EDA) of the `Beers` and `Breweries` datasets. These datasets can be found in the `datasets` directory for the project. The project will attempt to investigate the data by performing the following steps:
 
@@ -224,7 +233,7 @@ maxIBU <- repBeerBrewDF[which.max(repBeerBrewDF$IBU),]
 The state with the maximum ABV value is `r maxABV$State` with a value of `r maxABV$ABV`. 
 The state with the maximum IBU value is `r maxIBU$State` with a value of `r maxIBU$IBU`. 
 
-### 6.   Comment on the summary statistics and distribution of the ABV variable.
+### 6.   Comment on the summary statistics and distribution of the ABV variable
 To generate the summary statistics of the ABV variable we remove all rows with `0` and use the `Summary` function. This function lists the 5 number summary. To graphically inspect the data we generate a boxplot of the ABV variable. Additionally, we used a histogram graph to show the distribution of the ABV data. When the histogram is combined with a standard normal distribution we can see the slight right-skew in the data. 
 ```{r}
 ##unused
@@ -273,7 +282,8 @@ plot(d, main='Density plot of ABV')
 
 ```
 
-### 7. Identify any relationship between the bitterness of the beer and its alcoholic content. Draw a scatter plot.  Make your best judgment of a relationship and EXPLAIN your answer.
+### 7. Identify any relationship between the bitterness of the beer and its alcoholic content
+
 Relationships between the data can be seen with the linear regression line fit to the data. The positive slope of the line is indicative of a positive relationship between ABV and IBU variables. The grey area around the line is the standard error. Additionally, the correlation matrix shows the same relationship with the dark blue value. 
 
 ```{r message=FALSE, warning=FALSE}
@@ -311,7 +321,7 @@ corrplot(cormat, cormattype = "upper", order = "hclust", tl.col = "black", tl.sr
 ```
 
 
-### 8   Investigate the difference with respect to IBU and ABV between IPAs and other types of Ale
+### 8.   Investigate the difference with respect to IBU and ABV between IPAs and other types of Ale
 For KNN classification we used a 80/20 split. We dynamically find the best value for k by executing the model 100 times and record the accuracy for each run. The optimal k value is the one we have identified to have the maximum accuracy value. This k value is then used to generate the confusion matrix and statistics report. Additionally, we draw the population boundaries to visualize the error in the model. Given this data, Ale can be identified from the lower ABV and IBU values when compared with IPA beer.
 
 
@@ -406,7 +416,7 @@ ggplot(plot.df, aes(IBU, ABV, color = predicted, fill = predicted)) +
   geom_polygon(data = boundary, aes(x,y), alpha = 0.5)
 ```
 
-### 9. Find one other useful inference from the data that you feel Budweiser may be able to find value in.
+### 9. Find one other useful inference from the data that you feel Budweiser may be able to find value in
 
 Performing simple text mining we were able to identify several beer types. Using these types we matched the manufacturing base for each type of beer to the State in which it is manufactured. Additionally, we correlate the ABV values to each State and serving size. This data enables us to identify underrepresented manufacturing bases and market opportunities as well as preferred serving sizes.  
 
@@ -497,3 +507,12 @@ for (df in t){
 
 
 ```
+
+# Conclusion 
+Through the analysis of the Beer and Brewery data, we found that there were several states with few brewing facilities where the creation of a Budweiser facility could increase revenue. While the current popularity of IPA style beers with high IBUs seems like an obvious market to expand into, we found that in the Southeastern US, demand for bitter, high alcohol, beers decreased and lager, pilsners, and hefeweizen beers were preferred.
+
+We have a few options for expansion; we found that there were very few ciders throughout the US and considering that Budweiser owns a brand of cider called “Johnny Appleseed” it could be beneficial to market this cider to more states from existing facilities to test market interest before committing to a new facility. Since Budweiser primarily brews lager-style beers, we chose to concentrate our efforts on states that have few facilities as well as a preference for beers with lower ABV and IBU units. To this end, we focused our research on Georgia, which has a port in Savannah which could ease transportation costs.
+
+Further analysis of Georgia showed that there is a preference for beers with an ABV between 4-7% and serving sizes between 4-8 ounces. The preference for smaller serving sizes will boost profits while reducing packaging costs. Furthermore, this would not require a major change to Budweiser manufacturing capabilities as the ABV percentage is in line with existing Budweiser beers.
+
+In conclusion, we recommend that Budweiser build a new facility in Georgia, the tax rate is forgiving at 6%, and this cost would be countered by the increased profits gained through smaller beverage containers as well as reduced shipping costs.
