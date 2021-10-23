@@ -26,6 +26,7 @@ The project hierarchy is outlined below.
 |   |-- case_study_01.txt
 |   `-- case_study_01_rubric.txt
 |-- presentation
+|   |-- Case_Study_01_Final.pptx
 |   `-- old
 |       |-- Very Beer Focused PPT_case_study_01_presentation.pptx
 |       `-- case_study_01_presentation.pptx
@@ -38,6 +39,6 @@ The project hierarchy is outlined below.
         |-- week_8_case_study_01.html
         `-- week_8_case_study_01.rmd
 
-7 directories, 17 files
+7 directories, 18 files
 ```    
 
